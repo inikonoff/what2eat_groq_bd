@@ -265,7 +265,7 @@ class CacheManager:
 class ImageGenerationService:
     """Умный сервис генерации изображений с приоритетом Gemini и кэшированием"""
     
-    def __init__(self):
+  def __init__(self):
         self.gemini_service = gemini_service
         self.replicate_service = replicate_service
         self.cache_manager = CacheManager()
@@ -281,8 +281,9 @@ class ImageGenerationService:
             "gemini_daily_used": 0,
             "last_reset_date": datetime.now().date().isoformat()
         }
-        
-        # Периодическая очистка кэша
+
+    async def start(self):
+        """Безопасный запуск фоновых задач"""
         self._start_periodic_cleanup()
         
         logger.info("✅ ImageGenerationService инициализирован")
@@ -507,4 +508,5 @@ class ImageGenerationService:
 
 
 # Синглтон
+
 image_service = ImageGenerationService()
