@@ -1,0 +1,28 @@
+# Основные зависимости
+aiogram==3.15.0
+aiohttp==3.10.5
+python-dotenv==1.0.0
+
+# База данных
+asyncpg==0.29.0
+SQLAlchemy==2.0.25
+alembic==1.13.1
+
+# API клиенты
+groq==0.9.0
+replicate==0.26.0
+requests==2.32.3
+
+# Обработка изображений и голоса
+Pillow==10.3.0
+SpeechRecognition==3.10.4
+pydub==0.25.1
+
+# Валидация данных
+pydantic==2.6.4
+
+# Утилиты
+colorlog==6.8.2
+redis==5.0.3  # Опционально, для Redis кэша
+
+# Dev зависим
