@@ -1,57 +1,76 @@
 import os
 from dotenv import load_dotenv
+from typing import Optional
+from dataclasses import dataclass
 
 load_dotenv()
 
-# API ключи
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-REPLICATE_API_KEY = os.getenv("REPLICATE_API_KEY")
+@dataclass
+class DatabaseConfig:
+    url: str
+    min_connections: int = 1
+    max_connections: int = 10
+    statement_cache_size: int = 0
+    
+    def __post_init__(self):
+        if not self.url:
+            raise ValueError("DATABASE_URL не найден в переменных окружения!")
 
-# Supabase (PostgreSQL)
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+@dataclass
+class APIConfig:
+    telegram_token: str
+    groq_api_key: str
+    unsplash_access_key: Optional[str] = None
+    replicate_api_key: Optional[str] = None  # Для генерации изображений
+    
+    def __post_init__(self):
+        if not self.telegram_token:
+            raise ValueError("TELEGRAM_TOKEN не найден!")
+        if not self.groq_api_key:
+            raise ValueError("GROQ_API_KEY не найден!")
 
-# Настройки генерации изображений
-IMAGE_PROVIDER_PRIORITY = os.getenv("IMAGE_PROVIDER_PRIORITY", "gemini_first")  # gemini_first, replicate_only
-ENABLE_IMAGE_CACHE = os.getenv("ENABLE_IMAGE_CACHE", "true").lower() == "true"
-GEMINI_DAILY_LIMIT = int(os.getenv("GEMINI_DAILY_LIMIT", "50"))
-REPLICATE_FALLBACK_ENABLED = os.getenv("REPLICATE_FALLBACK_ENABLED", "true").lower() == "true"
+@dataclass
+class ModelConfig:
+    groq_model: str = "llama-3.3-70b-versatile"
+    groq_max_tokens: int = 2000
+    speech_language: str = "ru-RU"
+    replicate_model: str = "stability-ai/stable-diffusion"  # Для изображений
 
-# Настройки кэширования
-IMAGE_CACHE_DIR = os.getenv("IMAGE_CACHE_DIR", "image_cache")
-MAX_CACHE_SIZE_MB = int(os.getenv("MAX_CACHE_SIZE_MB", "1000"))  # 1GB
-CACHE_TTL_DAYS = int(os.getenv("CACHE_TTL_DAYS", "30"))
-CACHE_CLEANUP_INTERVAL_HOURS = int(os.getenv("CACHE_CLEANUP_INTERVAL_HOURS", "24"))
+@dataclass
+class AppConfig:
+    temp_dir: str = "temp"
+    max_history_messages: int = 10
+    session_ttl_minutes: int = 60
+    image_cache_ttl_hours: int = 24
 
-# Настройки изображений
-IMAGE_QUALITY = int(os.getenv("IMAGE_QUALITY", "85"))
-MAX_IMAGE_SIZE_MB = int(os.getenv("MAX_IMAGE_SIZE_MB", "5"))
-DEFAULT_IMAGE_FORMAT = os.getenv("DEFAULT_IMAGE_FORMAT", "JPEG")
+# Создание экземпляров конфигурации
+DB_CONFIG = DatabaseConfig(
+    url=os.getenv("DATABASE_URL", ""),
+    min_connections=int(os.getenv("DB_MIN_CONNECTIONS", "1")),
+    max_connections=int(os.getenv("DB_MAX_CONNECTIONS", "10"))
+)
 
-# Настройки Groq
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
-GROQ_MAX_TOKENS = int(os.getenv("GROQ_MAX_TOKENS", "2000"))
-SPEECH_LANGUAGE = os.getenv("SPEECH_LANGUAGE", "ru-RU")
+API_CONFIG = APIConfig(
+    telegram_token=os.getenv("TELEGRAM_TOKEN", ""),
+    groq_api_key=os.getenv("GROQ_API_KEY", ""),
+    unsplash_access_key=os.getenv("UNSPLASH_ACCESS_KEY"),
+    replicate_api_key=os.getenv("REPLICATE_API_KEY")
+)
 
-# Логирование
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
-LOG_TO_FILE = os.getenv("LOG_TO_FILE", "false").lower() == "true"
-LOG_FILE_PATH = os.getenv("LOG_FILE_PATH", "logs/bot.log")
+MODEL_CONFIG = ModelConfig()
 
-# Админ
-ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))
+APP_CONFIG = AppConfig()
 
-# Папки
-TEMP_DIR = "temp"
-os.makedirs(TEMP_DIR, exist_ok=True)
-os.makedirs(IMAGE_CACHE_DIR, exist_ok=True)
+# Создаем временную папку
+os.makedirs(APP_CONFIG.temp_dir, exist_ok=True)
 
-# Ограничения
-MAX_HISTORY_MESSAGES = 8
-MAX_PRODUCTS_LENGTH = 2000
-MAX_RECIPE_LENGTH = 4000
-
-# Периодические задачи
-IMAGE_CACHE_CLEANUP_ENABLED = os.getenv("IMAGE_CACHE_CLEANUP_ENABLED", "true").lower() == "true"
+# Backward compatibility (для существующего кода)
+TELEGRAM_TOKEN = API_CONFIG.telegram_token
+GROQ_API_KEY = API_CONFIG.groq_api_key
+UNSPLASH_ACCESS_KEY = API_CONFIG.unsplash_access_key
+DATABASE_URL = DB_CONFIG.url
+SPEECH_LANGUAGE = MODEL_CONFIG.speech_language
+GROQ_MODEL = MODEL_CONFIG.groq_model
+GROQ_MAX_TOKENS = MODEL_CONFIG.groq_max_tokens
+TEMP_DIR = APP_CONFIG.temp_dir
+MAX_HISTORY_MESSAGES = APP_CONFIG.max_history_messages
